@@ -13,14 +13,13 @@ import java.util.List;
 
 public class ArmaController {
     ServicioArma servicioArma = new ServicioArma();
-
     @GetMapping(value = "/healthCheck")
     public String healthCheck(){
         return "service status OK!";
     }
     @GetMapping(value = "/")
     public List<Arma> getArmas(){
-        servicioArma.añadirArma(new Rifle(12,12,"hola",12,12,2));
+
         return servicioArma.getArmas();
     }
     @PostMapping(value = "/set")
