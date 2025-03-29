@@ -2,8 +2,7 @@ package com.ProyectoEmpresariales.Arma.model;
 
 
 import java.lang.reflect.Field;
-import java.time.LocalDate;
-
+import java.time.LocalDateTime;
 
 
 public class Arma implements Cloneable {
@@ -11,28 +10,11 @@ public class Arma implements Cloneable {
     private int daño;
     private int municion;
     private String nombre;
-    private LocalDate fechaCreacion;
-    private boolean recargando = false;
+    private LocalDateTime fechaCreacion;
 
-    public boolean isRecargando() {
-        return recargando;
+
+    public Arma() {
     }
-
-    public void setRecargando(boolean recargando) {
-        this.recargando = recargando;
-    }
-
-    private boolean recargaCompletada;
-
-    public boolean isRecargaCompletada() {
-        return recargaCompletada;
-    }
-
-    public void setRecargaCompletada(boolean recargaCompletada) {
-        this.recargaCompletada = recargaCompletada;
-    }
-
-
 
     //Nuevos atributos
     private int capMunicion;
@@ -40,13 +22,13 @@ public class Arma implements Cloneable {
     private final int distancia = 100;
 
 
-    public Arma(int daño, int municion, String nombre, int vida) {
+    public Arma(int daño, int municion, String nombre, int vida,LocalDateTime fechaCreacion) {
 
         this.daño = daño;
         this.municion = municion;
         this.capMunicion = municion;
         this.nombre = nombre;
-        this.fechaCreacion = LocalDate.now();
+        this.fechaCreacion = fechaCreacion;
         this.vida = vida;
     }
 
@@ -59,6 +41,8 @@ public class Arma implements Cloneable {
             throw new RuntimeException("Error al clonar el objeto Arma", e);
         }
     }
+    public String toStringCompleto() {return null;}
+    public double getVelocidad(){return 0;}
 
     public int getVida() {
         return vida;
@@ -92,11 +76,11 @@ public class Arma implements Cloneable {
         this.nombre = nombre;
     }
 
-    public LocalDate getFechaCreacion() {
+    public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(LocalDate fechaCreacion) {
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 

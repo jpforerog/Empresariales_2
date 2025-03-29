@@ -1,16 +1,29 @@
 package com.ProyectoEmpresariales.Arma.model;
 
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 public class Rifle extends Arma {
 
     private int cadenciaDisparo;
-    private float velocidad;
-    private boolean recargaCompletada;
+    private double velocidad;
 
 
 
-    public Rifle(int daño, int municion, String nombre, int vida, int cadenciaDisparo, float velocidad) {
-        super(daño, municion, nombre, vida);
-        this.cadenciaDisparo = cadenciaDisparo;
+    @JsonCreator
+    public Rifle(@JsonProperty("dano") int daño,
+                 @JsonProperty("municion") int municion,
+                 @JsonProperty("nombre") String nombre,
+                 @JsonProperty("vida") int vida,
+                 @JsonProperty("velocidad") double velocidad,
+                 @JsonProperty("fechaCreacion") LocalDateTime fecha){
+
+        super(daño, municion, nombre, vida,fecha);
+        this.setFechaCreacion(fecha);
         this.velocidad = velocidad;
 
     }
@@ -28,7 +41,7 @@ public class Rifle extends Arma {
         this.cadenciaDisparo = cadenciaDisparo;
     }
 
-    public float getVelocidad() {
+    public double getVelocidad() {
         return velocidad;
     }
 
