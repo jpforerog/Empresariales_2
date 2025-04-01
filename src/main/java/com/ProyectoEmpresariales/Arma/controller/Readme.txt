@@ -40,6 +40,6 @@ PUT http://localhost:8080/Arma/
   "vida": 6,
   "velocidad": 2,
   "fechaCreacion":"2025-03-28T00:00:10",
-  "nombreNuevo":"",
+  "nombreNuevo":"hola1",
   "tipo":"Rifle"
 }
