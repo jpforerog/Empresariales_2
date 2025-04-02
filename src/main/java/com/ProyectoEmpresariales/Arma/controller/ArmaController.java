@@ -18,7 +18,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -96,17 +98,30 @@ public class ArmaController {
         }
         return new ResponseEntity<>(arrayNode,HttpStatus.ACCEPTED);
     }
-
     @GetMapping(value = "/buscar")
-    public ResponseEntity getArma(@RequestBody JsonNode jsonNode){
-        String nombre = jsonNode.get("nombre").asText();
+    public ResponseEntity getArmaIndice(@RequestBody JsonNode jsonNode){
+        objectMapper.registerModule(new JavaTimeModule());
+        int indice=-1;
+        if(!jsonNode.has("indice")){
+            return new ResponseEntity("El json debe tener un atributo indice",HttpStatus.BAD_REQUEST);
+        }
+        if (jsonNode.get("indice").canConvertToInt()) {
+            indice = jsonNode.get("indice").asInt();
+        }else {
+            return new ResponseEntity<>("El valor del indice debe ser numerico",HttpStatus.BAD_REQUEST);
+        }
         String tipo = "";
+        if(!jsonNode.has("tipo")){
+            return new ResponseEntity("El json tiene que tener un atributo tipo",HttpStatus.BAD_REQUEST);
+        }
         if(jsonNode.get("tipo").asText().equalsIgnoreCase("rifle")){
             tipo = "class com.ProyectoEmpresariales.Arma.model.Rifle";
+        }else {
+            return new ResponseEntity("El tipo de arma debe ser rifle o lanzador",HttpStatus.BAD_REQUEST);
         }
         for(Arma arma: servicioArma.getArmas()){
 
-            if(arma.getNombre().equals(nombre) && arma.getClass().toString().equals(tipo)){
+            if(arma.getIndex() == indice && arma.getClass().toString().equals(tipo)){
                 System.out.println(arma);
                 return new ResponseEntity<>(arma,HttpStatus.BAD_REQUEST);
             }else {
@@ -115,10 +130,65 @@ public class ArmaController {
         }
         return new ResponseEntity<>("Arma no encontrada",HttpStatus.NOT_FOUND);
     }
+
+    @GetMapping(value = "/buscarNombre")
+    public ResponseEntity getArma(@RequestBody JsonNode jsonNode){
+        objectMapper.registerModule(new JavaTimeModule());
+        String nombre = jsonNode.get("nombre").asText();
+
+
+
+        for(Arma arma: servicioArma.getArmas()){
+
+            if(arma.getNombre().equals(nombre)){
+                System.out.println(arma);
+                return new ResponseEntity<>(arma,HttpStatus.BAD_REQUEST);
+            }else {
+                ResponseEntity.notFound();
+            }
+        }
+        return new ResponseEntity<>("Arma no encontrada",HttpStatus.NOT_FOUND);
+    }
+
+    public String verificarCamposYTipos(JsonNode jsonNode) {
+        // Verificar existencia y tipo de cada campo
+        if (!jsonNode.has("nombre") || !jsonNode.get("nombre").isTextual()) {
+            return new String("El nombre tiene que ser un texto");
+        }
+
+        if (!jsonNode.has("daño") || !jsonNode.get("daño").isNumber()) {
+            return new String("El daño tiene que ser un entero");
+        }
+
+        if (!jsonNode.has("municion") || !jsonNode.get("municion").isNumber()) {
+            return new String("la municion tiene que ser un entero");
+        }
+
+        if (!jsonNode.has("vida") || !jsonNode.get("vida").isNumber()) {
+            return new String("La vida tiene que ser un entero");
+        }
+
+        if (!jsonNode.has("velocidad") || !jsonNode.get("velocidad").isNumber()) {
+            return new String("La velocidad tiene que ser un numero");
+        }
+
+        if (!jsonNode.has("fechaCreacion") || !jsonNode.get("fechaCreacion").isTextual()) {
+            return new String("La fecha de creacion tiene que tener este formato [0000-00-00T00:00:00,Año-mes-diaTHora,Minutos,Sg]");
+        }
+
+        return "json valido";
+    }
+
     @PostMapping(value = "/")
     //Revisar que no entren jsons nulos
     public ResponseEntity añadirRifle(@RequestBody JsonNode jsonNode){
         objectMapper.registerModule(new JavaTimeModule());
+        String res = verificarCamposYTipos(jsonNode);
+        if(!res.equals("json valido")){
+            return new ResponseEntity<>(res,HttpStatus.BAD_REQUEST);
+        }
+
+
         if(!jsonNode.get("nombre").asText().isEmpty()){
             try {
                 Rifle rifle = objectMapper.treeToValue(jsonNode, Rifle.class);
@@ -136,6 +206,7 @@ public class ArmaController {
     //Solo pruebas
     @GetMapping(value = "")
     public void test(){
+        objectMapper.registerModule(new JavaTimeModule());
         try {
             servicioArma.añadirArma(new Rifle(2,2,"hola",2,2,LocalDateTime.parse("2025-03-28T00:00:10")));
         } catch (Exception e) {
@@ -146,17 +217,29 @@ public class ArmaController {
 
     @DeleteMapping(value = "/")
     public ResponseEntity eliminarArma(@RequestBody JsonNode jsonNode){
+        objectMapper.registerModule(new JavaTimeModule());
+        int index = -1;
 
-        Arma arma1 = servicioArma.getArmas().get(0);
-        String nombre = jsonNode.get("nombre").asText();
+        if (!jsonNode.has("indice")){
+            return new ResponseEntity("Tienes que poner el campo indice con el que esta identificado el arma",HttpStatus.BAD_REQUEST);
+        }
+
+        if (jsonNode.get("indice").canConvertToInt()){
+            index = jsonNode.get("indice").asInt();
+        }else {
+            return new ResponseEntity("El indice tiene que ser un numero entero",HttpStatus.BAD_REQUEST);
+        }
+
         String tipo = jsonNode.get("tipo").asText();
         if (tipo.equalsIgnoreCase("Rifle")){
             tipo="class com.ProyectoEmpresariales.Arma.model.Rifle";
+        }else {
+            return new ResponseEntity("El tipo de arma debe ser rifle o lanzador",HttpStatus.BAD_REQUEST);
         }
 
         for (Arma arma: servicioArma.getArmas()){
 
-            if(arma.getNombre().equals(nombre)&&String.valueOf(arma.getClass()).equals(tipo)){
+            if(arma.getIndex() == index && String.valueOf(arma.getClass()).equals(tipo)){
 
                 servicioArma.eliminarArma(arma);
                 return new ResponseEntity<>(arma,HttpStatus.ACCEPTED);
@@ -167,10 +250,12 @@ public class ArmaController {
     }
     @PutMapping(value = "/")
     public ResponseEntity actualizarArma(@RequestBody JsonNode jsonNode){
+        objectMapper.registerModule(new JavaTimeModule());
         String nombre ="";
-
+        if(!jsonNode.has("indice")){
+            return new ResponseEntity("Ingresa el campo de indice",HttpStatus.BAD_REQUEST);
+        }
         if(!jsonNode.get("nombre").asText().isEmpty()) {
-
             nombre = jsonNode.get("nombre").asText();
         }else{
             System.out.println("nulo");
@@ -186,16 +271,17 @@ public class ArmaController {
 
         for (Arma arma: servicioArma.getArmas()){
 
-            if(arma.getNombre().equals(nombre) && String.valueOf(arma.getClass()).equals(tipo) && !jsonNode.get("nombre").asText().isEmpty()){
+            if(arma.getIndex() == jsonNode.get("indice").asInt() && String.valueOf(arma.getClass()).equals(tipo) && !jsonNode.get("nombre").asText().isEmpty()){
 
                 ObjectNode objectNode = (ObjectNode) jsonNode;
                 objectNode.remove("tipo");
-                if(jsonNode.get("nombreNuevo").asText().isEmpty()){
-                    objectNode.remove("nombreNuevo");
-                }else {
-                    String n = jsonNode.get("nombreNuevo").asText();
-                    objectNode.put("nombre",n);
-                    objectNode.remove("nombreNuevo");
+                objectNode.remove("indice");
+
+                String nom = jsonNode.get("nombre").asText();
+                for(Arma a : servicioArma.getArmas()){
+                    if(arma.getIndex()!=a.getIndex() && nom.equals(a.getNombre())){
+                        return new ResponseEntity<>("Otra arma con el mimo nombre ya fue creada",HttpStatus.BAD_REQUEST);
+                    }
                 }
                 JsonNode json = (JsonNode) objectNode;
                 try {

@@ -9,6 +9,7 @@ import java.util.List;
 public class ServicioArma {
 
     private ArrayList<Arma> armas = new ArrayList<>();
+    private int contador = 0;
 
 
     public void añadirArma(Arma arm) throws Exception {
@@ -18,6 +19,8 @@ public class ServicioArma {
                     throw new Exception("Arma con el mismo nombre y mismo tipo");
                 }
             }
+            arm.setIndex(contador);
+            contador+=1;
             armas.add(arm);
 
         }
@@ -45,13 +48,13 @@ public class ServicioArma {
     public void actualizarArma(Arma armaAct, Arma nueva) {
 
         for (Arma ar : armas) {
-            System.out.println(armaAct.equals(ar));
-            if (armaAct.equals(ar)) {
-                System.out.println("Entraaa");
-                System.out.println(nueva);
-                armas.remove(ar);
-                armas.add(nueva);
 
+            if (armaAct.equals(ar)) {
+
+                int temp = ar.getIndex();
+                armas.remove(ar);
+                nueva.setIndex(temp);
+                armas.add(nueva);
                 return;
             }
         }

@@ -1,6 +1,19 @@
 LISTAR TODAS LAS ARMAS
 GET http://localhost:8080/Arma/
 
+BUSCAR POR INDICE
+GET http://localhost:8080/Arma/buscar
+{
+        "indice":1,
+        "tipo": "Rifle"
+    }
+
+BUSCAR POR NOMBRE
+GET http://localhost:8080/Arma/buscarNombre
+{
+    "nombre":"hola1"
+}
+
 LISTAR POR TIPO
 GET http://localhost:8080/Arma/tipo
 {
@@ -41,5 +54,6 @@ PUT http://localhost:8080/Arma/
   "velocidad": 2,
   "fechaCreacion":"2025-03-28T00:00:10",
   "nombreNuevo":"hola1",
-  "tipo":"Rifle"
+  "tipo":"Rifle",
+  "indice": 1
 }

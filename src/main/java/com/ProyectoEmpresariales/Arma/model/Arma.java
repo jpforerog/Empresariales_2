@@ -20,6 +20,7 @@ public class Arma implements Cloneable {
     private int capMunicion;
     private int vida = 100;
     private final int distancia = 100;
+    private int index;
 
 
     public Arma(int daño, int municion, String nombre, int vida,LocalDateTime fechaCreacion) {
@@ -46,6 +47,18 @@ public class Arma implements Cloneable {
 
     public int getVida() {
         return vida;
+    }
+
+    public int getDistancia() {
+        return distancia;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public void setVida(int vida) {
