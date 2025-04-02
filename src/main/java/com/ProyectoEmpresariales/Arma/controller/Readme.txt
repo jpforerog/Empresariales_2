@@ -1,6 +1,14 @@
 LISTAR TODAS LAS ARMAS
 GET http://localhost:8080/Arma/
 
+BUSCAR POR 2 VALORES
+GET http://localhost:8080/Arma/filtrar
+{
+    "nombre":"hola",
+    "vida_minima" : 2
+
+}
+
 BUSCAR POR INDICE
 GET http://localhost:8080/Arma/buscar
 {
@@ -23,7 +31,7 @@ GET http://localhost:8080/Arma/tipo
 LISTAR POR VIDA MINIMA
 GET http://localhost:8080/Arma/vida
 {
-    "vida minima" : 2
+    "vida_minima" : 2
 }
 
 INSERTAR UN ARMA
