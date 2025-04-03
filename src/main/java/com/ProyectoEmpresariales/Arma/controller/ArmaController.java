@@ -149,10 +149,10 @@ public class ArmaController {
     @PostMapping("/filtrar")
     public ResponseEntity<?> getArmaFilter(@RequestBody JsonNode jsonNode) {
         boolean tieneVidaMinima = jsonNode.has("vida_minima") && jsonNode.get("vida_minima").canConvertToInt();
-        boolean tieneDañoMinimo = jsonNode.has("daño_minimo") && jsonNode.get("daño_minimo").canConvertToInt();
+        boolean tieneDañoMinimo = jsonNode.has("dano_minimo") && jsonNode.get("dano_minimo").canConvertToInt();
 
         if (!tieneVidaMinima && !tieneDañoMinimo) {
-            return new ResponseEntity<>("El json debe tener al menos un filtro válido (vida_minima o daño_minimo)", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("El json debe tener al menos un filtro válido (vida_minima o dano_minimo)", HttpStatus.BAD_REQUEST);
         }
 
         List<Arma> armasFiltradas = new ArrayList<>();
@@ -166,7 +166,7 @@ public class ArmaController {
                 cumpleFiltros = false;
             }
 
-            if (tieneDañoMinimo && arma.getDaño() < jsonNode.get("daño_minimo").asInt()) {
+            if (tieneDañoMinimo && arma.getDaño() < jsonNode.get("dano_minimo").asInt()) {
                 cumpleFiltros = false;
             }
 
