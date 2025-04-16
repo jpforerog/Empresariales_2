@@ -1,6 +1,7 @@
 package com.ProyectoEmpresariales.Arma.model;
 
 
+import com.ProyectoEmpresariales.Arma.servicios.ServicioMunicion;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -9,9 +10,10 @@ import java.time.LocalDateTime;
 
 public class Rifle extends Arma {
 
-    private int cadenciaDisparo;
+    private Municion tipoMunicion;
     private double velocidad;
 
+    private ServicioMunicion servicioMunicion = ServicioMunicion.getInstancia();
 
 
     @JsonCreator
@@ -20,40 +22,52 @@ public class Rifle extends Arma {
                  @JsonProperty("nombre") String nombre,
                  @JsonProperty("vida") int vida,
                  @JsonProperty("velocidad") double velocidad,
-                 @JsonProperty("fechaCreacion") LocalDateTime fecha){
+                 @JsonProperty("fechaCreacion") LocalDateTime fecha,
+                 @JsonProperty("tipoMunicion") Municion tipoMunicion){
 
         super(daño, municion, nombre, vida,fecha);
         this.setFechaCreacion(fecha);
         this.velocidad = velocidad;
-
+        if (tipoMunicion == null){
+            for (Municion mun : servicioMunicion.getMuniciones()){
+                if(mun.getIndex()==0){
+                    this.tipoMunicion = mun;
+                }
+            }
+        }else{
+            this.tipoMunicion = tipoMunicion;
+        }
     }
+
 
     @Override
     public Rifle clone() {
         return (Rifle) super.clone();
     }
 
-    public int getCadenciaDisparo() {
-        return cadenciaDisparo;
+    public Municion getTipoMunicion() {
+        return tipoMunicion;
     }
 
-    public void setCadenciaDisparo(int cadenciaDisparo) {
-        this.cadenciaDisparo = cadenciaDisparo;
+    public void setTipoMunicion(Municion tipoMunicion) {
+        this.tipoMunicion = tipoMunicion;
+    }
+
+    public void setVelocidad(double velocidad) {
+        this.velocidad = velocidad;
     }
 
     public double getVelocidad() {
         return velocidad;
     }
 
-    public void setVelocidad(float velocidad) {
-        this.velocidad = velocidad;
-    }
+
 
 
     public String toStringCompleto() {
         return "Rifle{" + "da\u00f1o=" + getDaño() + ", municion=" + getMunicion() + ", nombre=" + getNombre()
                 + ", fechaCreacion=" + getFechaCreacion() + ", capMunicion=" + getMunicion()
-                + ", vida=" + getVida() + ", velocidad = " + velocidad + ", cadencia de disparo= " + cadenciaDisparo + '}';
+                + ", vida=" + getVida() + ", velocidad = " + velocidad + ", tipo de municion= " + tipoMunicion.toString() + '}';
     }
 
     @Override
@@ -64,12 +78,11 @@ public class Rifle extends Arma {
 
     public boolean engatillado() {
 
-        double probEngatillado = cadenciaDisparo > 500 ? .4 : .2;
         double random = Math.random(); // Número aleatorio entre 0 y 1
 
         // Si el número aleatorio es menor que la probabilidad, ocurre un engatillado
 
-        return random < probEngatillado;
+        return random < .4;
     }
 
     @Override

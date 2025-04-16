@@ -3,6 +3,7 @@ package com.ProyectoEmpresariales.Arma.controller;
 import com.ProyectoEmpresariales.Arma.model.Arma;
 import com.ProyectoEmpresariales.Arma.model.Rifle;
 import com.ProyectoEmpresariales.Arma.servicios.ServicioArma;
+import com.ProyectoEmpresariales.Arma.servicios.ServicioMunicion;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 public class ArmaController {
     ServicioArma servicioArma = new ServicioArma();
+    ServicioMunicion servicioMunicion = ServicioMunicion.getInstancia();
     ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping(value = "/healthCheck")
@@ -48,7 +50,7 @@ public class ArmaController {
         return new ResponseEntity<>(arrayNode,HttpStatus.OK);
     }
 
-    @PostMapping("/tipo")
+    @GetMapping("/tipo")
     public ResponseEntity<?> getArmasTipo(@RequestBody JsonNode jsonNode) {
         objectMapper.registerModule(new JavaTimeModule());
         if (!jsonNode.has("tipo")) {
@@ -72,7 +74,7 @@ public class ArmaController {
         }
     }
 
-    @PostMapping("/vida")
+    @GetMapping("/vida")
     public ResponseEntity<?> getArmasVida(@RequestBody JsonNode jsonNode) {
         objectMapper.registerModule(new JavaTimeModule());
         if (!jsonNode.has("vida_minima")) {
@@ -95,7 +97,7 @@ public class ArmaController {
         return new ResponseEntity<>(objectMapper.valueToTree(armas), HttpStatus.OK);
     }
 
-    @PostMapping("/buscar")
+    @GetMapping("/buscar")
     public ResponseEntity<?> getArmaIndice(@RequestBody JsonNode jsonNode) {
         objectMapper.registerModule(new JavaTimeModule());
         if (!jsonNode.has("indice")) {
@@ -128,7 +130,7 @@ public class ArmaController {
         return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping("/buscarNombre")
+    @GetMapping("/buscarNombre")
     public ResponseEntity<?> getArma(@RequestBody JsonNode jsonNode) {
         objectMapper.registerModule(new JavaTimeModule());
         if (!jsonNode.has("nombre")) {
@@ -146,7 +148,7 @@ public class ArmaController {
         return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping("/filtrar")
+    @GetMapping("/filtrar")
     public ResponseEntity<?> getArmaFilter(@RequestBody JsonNode jsonNode) {
         boolean tieneVidaMinima = jsonNode.has("vida_minima") && jsonNode.get("vida_minima").canConvertToInt();
         boolean tieneDañoMinimo = jsonNode.has("dano_minimo") && jsonNode.get("dano_minimo").canConvertToInt();
@@ -249,7 +251,7 @@ public class ArmaController {
     public void test(){
         objectMapper.registerModule(new JavaTimeModule());
         try {
-            servicioArma.añadirArma(new Rifle(2,2,"hola",2,2,LocalDateTime.parse("2025-03-28T00:00:10")));
+            servicioArma.añadirArma(new Rifle(2,2,"hola",2,2,LocalDateTime.parse("2025-03-28T00:00:10"),null));
         } catch (Exception e) {
             ResponseEntity.internalServerError().body(e.toString());
             throw new RuntimeException(e);

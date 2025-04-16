@@ -1,0 +1,25 @@
+Listar las municiones, siempre deberia aparecer una
+GET http://localhost:8080/Municion/
+
+Crear municion nueva
+POST http://localhost:8080/Municion/
+{
+    "nombre":"explosiva",
+    "cadencia": 1,
+    "danoArea":"true"
+}
+
+Editar una muncicion
+PUT http://localhost:8080/Municion/
+{
+    "nombre":"no ex",
+    "cadencia": 1111,
+    "danoArea":"false",
+    "indice":5
+}
+
+Eliminar una municion
+DELETE http://localhost:8080/Municion/
+{
+    "indice":3
+}

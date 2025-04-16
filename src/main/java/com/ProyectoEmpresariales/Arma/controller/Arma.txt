@@ -37,19 +37,24 @@ GET http://localhost:8080/Arma/vida
 INSERTAR UN ARMA
 POST http://localhost:8080/Arma/
 {
-  "nombre": "hola1",
-  "daño": 2,
-  "municion": 2,
-  "vida": 2,
-  "velocidad": 2,
-  "fechaCreacion":"2025-03-28T00:00:10"
+   "daño": 5 ,
+    "municion":5,
+    "nombre": "Ak47",
+    "vida":2,
+    "velocidad": 2,
+    "fechaCreacion":"2025-03-28T00:00:10",
+    "tipoMunicion":{
+        "nombre": "explosiva",
+        "danoArea": true,
+        "cadencia": 10
+    }
 }
 
 ELIMINAR UN ARMA
 DELETE http://localhost:8080/Arma/
 {
-    "nombre":"hola",
-    "tipo":"Rifle"
+    "tipo":"Rifle",
+    "indice":0
 }
 
 EDITAR UN ARMA
@@ -61,6 +66,11 @@ PUT http://localhost:8080/Arma/
   "vida": 6,
   "velocidad": 2,
   "fechaCreacion":"2025-03-28T00:00:10",
+  "tipoMunicion":{
+          "nombre": "no explosiva",
+          "danoArea": false,
+          "cadencia": 10
+      },
   "tipo":"Rifle",
-  "indice": 1
+  "indice": 0
 }
