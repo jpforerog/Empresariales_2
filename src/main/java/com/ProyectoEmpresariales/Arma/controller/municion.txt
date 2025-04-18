@@ -9,6 +9,18 @@ POST http://localhost:8080/Municion/
     "danoArea":"true"
 }
 
+Obtener una municion por index
+GET http://localhost:8080/Municion/buscar/
+{
+"indice":0
+}
+
+Obteder una municion por nombre
+GET http://localhost:8080/Municion/buscarNombre/
+{
+"nombre":"Predeterminado"
+}
+
 Editar una muncicion
 PUT http://localhost:8080/Municion/
 {

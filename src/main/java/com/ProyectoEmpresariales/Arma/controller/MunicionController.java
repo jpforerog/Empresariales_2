@@ -46,6 +46,32 @@ public class MunicionController {
         return new ResponseEntity<>(arrayNode,HttpStatus.OK);
     }
 
+    @GetMapping(value = "/buscarNombre/")
+    public ResponseEntity getPorNombre(@RequestBody JsonNode jsonNode){
+        objectMapper.registerModule(new JavaTimeModule());
+        if(!jsonNode.has("nombre")){
+            return new ResponseEntity("Falta nombre",HttpStatus.BAD_REQUEST);
+        }
+
+        for(Municion municion:servicioMunicion.getMuniciones()){
+            if(municion.getNombre().equals(jsonNode.get("nombre").asText())){
+                return new ResponseEntity(municion,HttpStatus.ACCEPTED);
+            }
+        }
+        return new ResponseEntity("Municion no encontrada",HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping(value = "/buscar/")
+    public ResponseEntity getPorID(@RequestBody JsonNode jsonNode){
+        objectMapper.registerModule(new JavaTimeModule());
+
+        for(Municion municion:servicioMunicion.getMuniciones()){
+            if(municion.getIndex() == (jsonNode.get("indice").asInt())){
+                return new ResponseEntity(municion,HttpStatus.ACCEPTED);
+            }
+        }
+        return new ResponseEntity("Municion no encontrada",HttpStatus.NOT_FOUND);
+    }
 //    @GetMapping("/tipo")
 //    public ResponseEntity<?> getArmasTipo(@RequestBody JsonNode jsonNode) {
 //        objectMapper.registerModule(new JavaTimeModule());
