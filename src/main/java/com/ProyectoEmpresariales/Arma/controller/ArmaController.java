@@ -148,6 +148,56 @@ public class ArmaController {
         return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
     }
 
+    @PostMapping("/buscar")
+    public ResponseEntity<?> getArmaIndice1(@RequestBody JsonNode jsonNode) {
+        objectMapper.registerModule(new JavaTimeModule());
+        if (!jsonNode.has("indice")) {
+            return new ResponseEntity<>("El json debe tener un atributo indice", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!jsonNode.get("indice").canConvertToInt()) {
+            return new ResponseEntity<>("El valor del indice debe ser numerico", HttpStatus.BAD_REQUEST);
+        }
+
+        int indice = jsonNode.get("indice").asInt();
+
+        if (!jsonNode.has("tipo")) {
+            return new ResponseEntity<>("El json tiene que tener un atributo tipo", HttpStatus.BAD_REQUEST);
+        }
+
+        String tipo = jsonNode.get("tipo").asText();
+        if (!tipo.equalsIgnoreCase("rifle")) {
+            return new ResponseEntity<>("El tipo de arma debe ser rifle o lanzador", HttpStatus.BAD_REQUEST);
+        }
+
+        String tipoClase = "class com.ProyectoEmpresariales.Arma.model.Rifle";
+
+        for (Arma arma : servicioArma.getArmas()) {
+            if (arma.getIndex() == indice && arma.getClass().toString().equals(tipoClase)) {
+                return new ResponseEntity<>(arma, HttpStatus.OK);
+            }
+        }
+
+        return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping("/buscarNombre")
+    public ResponseEntity<?> getArma1(@RequestBody JsonNode jsonNode) {
+        objectMapper.registerModule(new JavaTimeModule());
+        if (!jsonNode.has("nombre")) {
+            return new ResponseEntity<>("El json debe tener un atributo nombre", HttpStatus.BAD_REQUEST);
+        }
+
+        String nombre = jsonNode.get("nombre").asText();
+
+        for (Arma arma : servicioArma.getArmas()) {
+            if (arma.getNombre().equals(nombre)) {
+                return new ResponseEntity<>(arma, HttpStatus.OK);
+            }
+        }
+
+        return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
+    }
     @GetMapping("/filtrar")
     public ResponseEntity<?> getArmaFilter(@RequestBody JsonNode jsonNode) {
         boolean tieneVidaMinima = jsonNode.has("vida_minima") && jsonNode.get("vida_minima").canConvertToInt();
@@ -247,16 +297,16 @@ public class ArmaController {
 
     }
     //Solo pruebas
-    @GetMapping(value = "")
-    public void test(){
-        objectMapper.registerModule(new JavaTimeModule());
-        try {
-            servicioArma.añadirArma(new Rifle(2,2,"hola",2,2,LocalDateTime.parse("2025-03-28T00:00:10"),null));
-        } catch (Exception e) {
-            ResponseEntity.internalServerError().body(e.toString());
-            throw new RuntimeException(e);
-        }
-    }
+//    @GetMapping(value = "")
+//    public void test(){
+//        objectMapper.registerModule(new JavaTimeModule());
+//        try {
+//            servicioArma.añadirArma(new Rifle(2,2,"hola",2,2,LocalDateTime.parse("2025-03-28T00:00:10"),null));
+//        } catch (Exception e) {
+//            ResponseEntity.internalServerError().body(e.toString());
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     @DeleteMapping(value = "/")
     public ResponseEntity eliminarArma(@RequestBody JsonNode jsonNode){

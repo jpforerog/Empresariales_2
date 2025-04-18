@@ -28,7 +28,7 @@ public class Rifle extends Arma {
         super(daño, municion, nombre, vida,fecha);
         this.setFechaCreacion(fecha);
         this.velocidad = velocidad;
-        if (tipoMunicion == null){
+        if (tipoMunicion.getNombre() == null){
             for (Municion mun : servicioMunicion.getMuniciones()){
                 if(mun.getIndex()==0){
                     this.tipoMunicion = mun;
