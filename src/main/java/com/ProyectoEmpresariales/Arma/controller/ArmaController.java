@@ -198,7 +198,7 @@ public class ArmaController {
 
         return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
     }
-    @GetMapping("/filtrar")
+    @PostMapping("/filtrar")
     public ResponseEntity<?> getArmaFilter(@RequestBody JsonNode jsonNode) {
         boolean tieneVidaMinima = jsonNode.has("vida_minima") && jsonNode.get("vida_minima").canConvertToInt();
         boolean tieneDañoMinimo = jsonNode.has("dano_minimo") && jsonNode.get("dano_minimo").canConvertToInt();
