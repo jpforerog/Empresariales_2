@@ -97,6 +97,52 @@ public class MunicionController {
         }
         return new ResponseEntity("Municion no encontrada",HttpStatus.NOT_FOUND);
     }
+
+    @PostMapping("/filtrarMunicion")
+    public ResponseEntity<?> getMunicionFilter(@RequestBody JsonNode jsonNode) {
+        boolean tieneCadenciaMinima = jsonNode.has("cadencia_minima") && jsonNode.get("cadencia_minima").canConvertToInt();
+        boolean tieneDañoArea = jsonNode.has("danoArea") && jsonNode.get("danoArea").isBoolean();
+
+        if (!tieneCadenciaMinima && !tieneDañoArea) {
+            return new ResponseEntity<>("El json debe tener al menos un filtro válido (cadencia_minima o danoArea)", HttpStatus.BAD_REQUEST);
+        }
+
+        List<Municion> municionesFiltradas = new ArrayList<>();
+        List<Municion> todasLasMuniciones = servicioMunicion.getMuniciones(); // Asumiendo que existe este servicio
+
+        // Filtramos todas las municiones
+        for (Municion municion : todasLasMuniciones) {
+            boolean cumpleFiltros = true;
+
+            if (tieneCadenciaMinima && municion.getCadencia() < jsonNode.get("cadencia_minima").asInt()) {
+                cumpleFiltros = false;
+            }
+
+            if (tieneDañoArea && municion.isDañoArea() != jsonNode.get("danoArea").asBoolean()) {
+                cumpleFiltros = false;
+            }
+
+            if (cumpleFiltros) {
+                municionesFiltradas.add(municion);
+            }
+        }
+
+        if (municionesFiltradas.isEmpty()) {
+            return new ResponseEntity<>("No existen municiones con esas características", HttpStatus.NOT_FOUND);
+        }
+
+        // Convertimos manualmente la lista a JSON para evitar problemas de conversión
+        try {
+            String jsonResponse = objectMapper.writeValueAsString(municionesFiltradas);
+            return ResponseEntity.ok()
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body(jsonResponse);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error al convertir los resultados a JSON: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 //    @GetMapping("/tipo")
 //    public ResponseEntity<?> getArmasTipo(@RequestBody JsonNode jsonNode) {
 //        objectMapper.registerModule(new JavaTimeModule());

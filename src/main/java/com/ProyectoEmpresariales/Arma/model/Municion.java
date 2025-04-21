@@ -20,4 +20,27 @@ public class Municion {
         this.cadencia = cadencia;
     }
 
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public boolean isDañoArea() {
+        return dañoArea;
+    }
+
+    public void setDañoArea(boolean dañoArea) {
+        this.dañoArea = dañoArea;
+    }
+
+    public int getCadencia() {
+        return cadencia;
+    }
+
+    public void setCadencia(int cadencia) {
+        this.cadencia = cadencia;
+    }
 }
