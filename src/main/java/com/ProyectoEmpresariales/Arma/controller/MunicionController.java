@@ -143,177 +143,6 @@ public class MunicionController {
         }
     }
 
-//    @GetMapping("/tipo")
-//    public ResponseEntity<?> getArmasTipo(@RequestBody JsonNode jsonNode) {
-//        objectMapper.registerModule(new JavaTimeModule());
-//        if (!jsonNode.has("tipo")) {
-//            return new ResponseEntity<>("El json tiene que tener tipo como parametro", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        String tipo = jsonNode.get("tipo").asText();
-//
-//        if (tipo.equalsIgnoreCase("rifle")) {
-//            List<Arma> armas = servicioArma.getArmas().stream()
-//                    .filter(arma -> arma.getClass().toString().equals("class com.ProyectoEmpresariales.Arma.model.Rifle"))
-//                    .collect(Collectors.toList());
-//
-//            if (armas.isEmpty()) {
-//                return new ResponseEntity<>("No hay armas de ese tipo", HttpStatus.NOT_FOUND);
-//            }
-//
-//            return new ResponseEntity<>(objectMapper.valueToTree(armas), HttpStatus.OK);
-//        } else {
-//            return new ResponseEntity<>("El tipo tiene que ser Rifle o Lanzador", HttpStatus.BAD_REQUEST);
-//        }
-//    }
-//
-//    @GetMapping("/vida")
-//    public ResponseEntity<?> getArmasVida(@RequestBody JsonNode jsonNode) {
-//        objectMapper.registerModule(new JavaTimeModule());
-//        if (!jsonNode.has("vida_minima")) {
-//            return new ResponseEntity<>("El json tiene que tener vida_minima como parametro", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        if (!jsonNode.get("vida_minima").canConvertToInt()) {
-//            return new ResponseEntity<>("El valor tiene que ser un numero entero", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        int vidaMinima = jsonNode.get("vida_minima").asInt();
-//        List<Arma> armas = servicioArma.getArmas().stream()
-//                .filter(arma -> arma.getVida() >= vidaMinima)
-//                .collect(Collectors.toList());
-//
-//        if (armas.isEmpty()) {
-//            return new ResponseEntity<>("No hay armas con esa vida minima", HttpStatus.NOT_FOUND);
-//        }
-//
-//        return new ResponseEntity<>(objectMapper.valueToTree(armas), HttpStatus.OK);
-//    }
-//
-//    @GetMapping("/buscar")
-//    public ResponseEntity<?> getArmaIndice(@RequestBody JsonNode jsonNode) {
-//        objectMapper.registerModule(new JavaTimeModule());
-//        if (!jsonNode.has("indice")) {
-//            return new ResponseEntity<>("El json debe tener un atributo indice", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        if (!jsonNode.get("indice").canConvertToInt()) {
-//            return new ResponseEntity<>("El valor del indice debe ser numerico", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        int indice = jsonNode.get("indice").asInt();
-//
-//        if (!jsonNode.has("tipo")) {
-//            return new ResponseEntity<>("El json tiene que tener un atributo tipo", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        String tipo = jsonNode.get("tipo").asText();
-//        if (!tipo.equalsIgnoreCase("rifle")) {
-//            return new ResponseEntity<>("El tipo de arma debe ser rifle o lanzador", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        String tipoClase = "class com.ProyectoEmpresariales.Arma.model.Rifle";
-//
-//        for (Arma arma : servicioArma.getArmas()) {
-//            if (arma.getIndex() == indice && arma.getClass().toString().equals(tipoClase)) {
-//                return new ResponseEntity<>(arma, HttpStatus.OK);
-//            }
-//        }
-//
-//        return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
-//    }
-//
-//    @GetMapping("/buscarNombre")
-//    public ResponseEntity<?> getArma(@RequestBody JsonNode jsonNode) {
-//        objectMapper.registerModule(new JavaTimeModule());
-//        if (!jsonNode.has("nombre")) {
-//            return new ResponseEntity<>("El json debe tener un atributo nombre", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        String nombre = jsonNode.get("nombre").asText();
-//
-//        for (Arma arma : servicioArma.getArmas()) {
-//            if (arma.getNombre().equals(nombre)) {
-//                return new ResponseEntity<>(arma, HttpStatus.OK);
-//            }
-//        }
-//
-//        return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
-//    }
-//
-//    @GetMapping("/filtrar")
-//    public ResponseEntity<?> getArmaFilter(@RequestBody JsonNode jsonNode) {
-//        boolean tieneVidaMinima = jsonNode.has("vida_minima") && jsonNode.get("vida_minima").canConvertToInt();
-//        boolean tieneDañoMinimo = jsonNode.has("dano_minimo") && jsonNode.get("dano_minimo").canConvertToInt();
-//
-//        if (!tieneVidaMinima && !tieneDañoMinimo) {
-//            return new ResponseEntity<>("El json debe tener al menos un filtro válido (vida_minima o dano_minimo)", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        List<Arma> armasFiltradas = new ArrayList<>();
-//        List<Arma> todasLasArmas = servicioArma.getArmas();
-//
-//        // Primero filtramos todas las armas
-//        for (Arma arma : todasLasArmas) {
-//            boolean cumpleFiltros = true;
-//
-//            if (tieneVidaMinima && arma.getVida() < jsonNode.get("vida_minima").asInt()) {
-//                cumpleFiltros = false;
-//            }
-//
-//            if (tieneDañoMinimo && arma.getDaño() < jsonNode.get("dano_minimo").asInt()) {
-//                cumpleFiltros = false;
-//            }
-//
-//            if (cumpleFiltros) {
-//                armasFiltradas.add(arma);
-//            }
-//        }
-//
-//        if (armasFiltradas.isEmpty()) {
-//            return new ResponseEntity<>("No existen armas con esas características", HttpStatus.NOT_FOUND);
-//        }
-//
-//        // Convertimos manualmente la lista a JSON para evitar problemas de conversión
-//        try {
-//            String jsonResponse = objectMapper.writeValueAsString(armasFiltradas);
-//            return ResponseEntity.ok()
-//                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-//                    .body(jsonResponse);
-//        } catch (Exception e) {
-//            return new ResponseEntity<>("Error al convertir los resultados a JSON: " + e.getMessage(),
-//                    HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//
-//    public String verificarCamposYTipos(JsonNode jsonNode) {
-//        // Verificar existencia y tipo de cada campo
-//        if (!jsonNode.has("nombre") || !jsonNode.get("nombre").isTextual()) {
-//            return new String("El nombre tiene que ser un texto");
-//        }
-//
-//        if (!jsonNode.has("daño") || !jsonNode.get("daño").isNumber()) {
-//            return new String("El daño tiene que ser un entero");
-//        }
-//
-//        if (!jsonNode.has("municion") || !jsonNode.get("municion").isNumber()) {
-//            return new String("la municion tiene que ser un entero");
-//        }
-//
-//        if (!jsonNode.has("vida") || !jsonNode.get("vida").isNumber()) {
-//            return new String("La vida tiene que ser un entero");
-//        }
-//
-//        if (!jsonNode.has("velocidad") || !jsonNode.get("velocidad").isNumber()) {
-//            return new String("La velocidad tiene que ser un numero");
-//        }
-//
-//        if (!jsonNode.has("fechaCreacion") || !jsonNode.get("fechaCreacion").isTextual()) {
-//            return new String("La fecha de creacion tiene que tener este formato [0000-00-00T00:00:00,Año-mes-diaTHora,Minutos,Sg]");
-//        }
-//
-//        return "json valido";
-//    }
 
     @PostMapping(value = "/")
     public ResponseEntity añadirMunicion(@RequestBody JsonNode jsonNode){
@@ -344,7 +173,12 @@ public class MunicionController {
         }
 
         if (jsonNode.get("indice").canConvertToInt()){
-            index = jsonNode.get("indice").asInt();
+            if(jsonNode.get("indice").asInt() != 0){
+                index = jsonNode.get("indice").asInt();
+            }else{
+                return new ResponseEntity<>("La municion predeterminada no se puede eliminar",HttpStatus.BAD_REQUEST);
+            }
+
         }else {
             return new ResponseEntity("El indice tiene que ser un numero entero",HttpStatus.BAD_REQUEST);
         }
