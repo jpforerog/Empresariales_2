@@ -1,7 +1,9 @@
 package com.ProyectoEmpresariales.Arma.servicios;
 
 
+import com.ProyectoEmpresariales.Arma.model.Arma;
 import com.ProyectoEmpresariales.Arma.model.Municion;
+import com.ProyectoEmpresariales.Arma.model.Rifle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +13,7 @@ public class ServicioMunicion {
     private static volatile ServicioMunicion instancia;
     private ArrayList<Municion> municiones = new ArrayList<>();
     private int contador = 0;
+    private ServicioArma servicioArma= ServicioArma.getInstancia();
 
     private ServicioMunicion(){
         try {
@@ -64,8 +67,17 @@ public class ServicioMunicion {
 
         if (arma != null) {
             municiones.remove(arma);
+            cambiarPredeterminada(arma);
         }
 
+
+    }
+    void cambiarPredeterminada(Municion arma){
+        for (Arma armaTemp : servicioArma.getArmas()){
+            if (arma.getIndex()==((Rifle) armaTemp).getTipoMunicion().getIndex()){
+                ((Rifle) armaTemp).setTipoMunicion(getPredeterminada());
+            }
+        }
     }
 
     public void actualizarMunicion(Municion armaAct, Municion nueva) {
@@ -78,11 +90,27 @@ public class ServicioMunicion {
                 municiones.remove(ar);
                 nueva.setIndex(temp);
                 municiones.add(nueva);
+                actualizarMunicionArma(nueva);
                 return;
             }
         }
 
 
+    }
+
+    void actualizarMunicionArma(Municion municion){
+        for(Arma arma: servicioArma.getArmas()){
+            if(municion.getIndex() == ((Rifle)arma).getTipoMunicion().getIndex()){
+                ((Rifle) arma).setTipoMunicion(municion);
+            }
+        }
+    }
+    public Municion getPredeterminada(){
+        for (Municion mun : municiones){
+            if(mun.getIndex()==0){
+                return mun;
+            }
+        }return null;
     }
 
 

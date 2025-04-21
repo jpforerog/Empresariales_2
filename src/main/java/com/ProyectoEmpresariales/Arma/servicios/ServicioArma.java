@@ -2,6 +2,7 @@ package com.ProyectoEmpresariales.Arma.servicios;
 
 
 import com.ProyectoEmpresariales.Arma.model.Arma;
+import com.ProyectoEmpresariales.Arma.model.Municion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,11 @@ public class ServicioArma {
 
     private ArrayList<Arma> armas = new ArrayList<>();
     private int contador = 0;
+    private static volatile ServicioArma instancia;
 
+    private ServicioArma(){
+
+    }
 
     public void añadirArma(Arma arm) throws Exception {
         if (arm != null ) {
@@ -24,6 +29,16 @@ public class ServicioArma {
             armas.add(arm);
 
         }
+    }
+    public static ServicioArma getInstancia() {
+        if (instancia == null) {
+            synchronized (ServicioMunicion.class) {
+                if (instancia == null) {
+                    instancia = new ServicioArma();
+                }
+            }
+        }
+        return instancia;
     }
 
     public void listarArma() {

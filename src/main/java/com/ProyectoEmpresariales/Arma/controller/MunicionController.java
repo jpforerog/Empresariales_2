@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 
 public class MunicionController {
-    ServicioArma servicioArma = new ServicioArma();
+    ServicioArma servicioArma = ServicioArma.getInstancia();
     ServicioMunicion servicioMunicion = ServicioMunicion.getInstancia();
     ObjectMapper objectMapper = new ObjectMapper();
 

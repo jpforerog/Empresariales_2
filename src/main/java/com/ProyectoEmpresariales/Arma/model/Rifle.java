@@ -8,37 +8,51 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class Rifle extends Arma {
+public class Rifle extends Arma  {
 
-    private Municion tipoMunicion;
+    private Municion tipoMunicion = null;
     private double velocidad;
 
     private ServicioMunicion servicioMunicion = ServicioMunicion.getInstancia();
+    boolean municionEncontrada = false;
 
 
     @JsonCreator
-    public Rifle(@JsonProperty("dano") int daño,
+    public Rifle (@JsonProperty("dano") int daño,
                  @JsonProperty("municion") int municion,
                  @JsonProperty("nombre") String nombre,
                  @JsonProperty("vida") int vida,
                  @JsonProperty("velocidad") double velocidad,
                  @JsonProperty("fechaCreacion") LocalDateTime fecha,
-                 @JsonProperty("tipoMunicion") Municion tipoMunicion){
+                 @JsonProperty("tipoMunicion") Municion tipoMunicion) throws Exception {
 
-        super(daño, municion, nombre, vida,fecha);
+        super(daño, municion, nombre, vida, fecha);
         this.setFechaCreacion(fecha);
         this.velocidad = velocidad;
-        if (tipoMunicion.getNombre() == null){
-            for (Municion mun : servicioMunicion.getMuniciones()){
-                if(mun.getIndex()==0){
+        if (tipoMunicion.getNombre() == null) {
+            this.tipoMunicion = getPredeterminada();
+        } else {
+            for (Municion mun : servicioMunicion.getMuniciones()) {
+                if (mun.getNombre().equals(tipoMunicion.getNombre())) {
                     this.tipoMunicion = mun;
+                    municionEncontrada = true;
+                    break;
                 }
             }
-        }else{
-            this.tipoMunicion = tipoMunicion;
+            if (!municionEncontrada) {
+                this.tipoMunicion = getPredeterminada();
+            }
         }
     }
 
+    private Municion getPredeterminada() {
+        for (Municion mun : servicioMunicion.getMuniciones()){
+            if(mun.getIndex() == 0){
+                return mun;
+            }
+        }
+        return null; // o puedes lanzar una excepción aquí si es crítico
+    }
 
     @Override
     public Rifle clone() {

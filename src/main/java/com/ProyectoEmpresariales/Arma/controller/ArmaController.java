@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 
 public class ArmaController {
-    ServicioArma servicioArma = new ServicioArma();
+    ServicioArma servicioArma = ServicioArma.getInstancia();
     ServicioMunicion servicioMunicion = ServicioMunicion.getInstancia();
     ObjectMapper objectMapper = new ObjectMapper();
 
@@ -192,7 +192,8 @@ public class ArmaController {
 
         for (Arma arma : servicioArma.getArmas()) {
             if (arma.getNombre().equals(nombre)) {
-                return new ResponseEntity<>(arma, HttpStatus.OK);
+                ObjectNode objectNode = objectMapper.valueToTree(arma);
+                return new ResponseEntity<>(objectNode, HttpStatus.OK);
             }
         }
 
