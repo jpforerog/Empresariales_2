@@ -1,30 +1,50 @@
 package com.ProyectoEmpresariales.Arma.model;
 
-
-import java.lang.reflect.Field;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "ARMAS")
+@Inheritance(strategy = InheritanceType.JOINED)
+public abstract class Arma {
 
-public class Arma implements Cloneable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "arma_seq")
+    @SequenceGenerator(name = "arma_seq", sequenceName = "ARMA_SEQ", allocationSize = 1)
+    private Long id;
 
+    @Column(nullable = false)
     private int daño;
+
+    @Column(nullable = false)
     private int municion;
+
+    @Column(unique = true, nullable = false)
     private String nombre;
+
+    @Column(name = "FECHA_CREACION")
     private LocalDateTime fechaCreacion;
 
-
-    public Arma() {
-    }
-
-    //Nuevos atributos
+    @Column(name = "CAP_MUNICION")
     private int capMunicion;
+
+    @Column(nullable = false)
     private int vida = 100;
+
+    @Column(nullable = false)
     private final int distancia = 100;
+
+    // Campo legacy para compatibilidad con código existente
+    @Transient
     private int index;
 
+    @Column(name = "TIPO_ARMA", insertable = false, updatable = false)
+    private String tipoArma;
 
-    public Arma(int daño, int municion, String nombre, int vida,LocalDateTime fechaCreacion) {
+    protected Arma() {
+    }
 
+    protected Arma(int daño, int municion, String nombre, int vida, LocalDateTime fechaCreacion) {
         this.daño = daño;
         this.municion = municion;
         this.capMunicion = municion;
@@ -33,17 +53,15 @@ public class Arma implements Cloneable {
         this.vida = vida;
     }
 
+    public abstract double getVelocidad();
 
-    @Override
-    public Arma clone() {
-        try {
-            return (Arma) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("Error al clonar el objeto Arma", e);
-        }
+    public Long getId() {
+        return id;
     }
-    public String toStringCompleto() {return null;}
-    public double getVelocidad(){return 0;}
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public int getVida() {
         return vida;
@@ -105,51 +123,29 @@ public class Arma implements Cloneable {
         this.capMunicion = capMunicion;
     }
 
-
-    public static String[] obtenerNombresAtributos(Object objeto) {
-        // Obtener la clase del objeto
-        Class<?> clase = objeto.getClass();
-
-        // Obtener todos los campos (atributos) declarados en la clase
-        Field[] campos = clase.getDeclaredFields();
-
-        // Crear un arreglo para almacenar los nombres de los atributos
-        String[] nombres = new String[campos.length];
-
-        // Recorrer los campos y obtener sus nombres
-        for (int i = 0; i < campos.length; i++) {
-            nombres[i] = campos[i].getName();
-        }
-
-        return nombres;
+    public String getTipoArma() {
+        return tipoArma;
     }
 
     public boolean enemigoVivo(Arma enemigo) {
-        if (enemigo.getVida() <= 0) {
-            return false;
-        }
-        return true;
+        return enemigo.getVida() > 0;
     }
-
 
     public Arma disparar(Arma objetivoConVida) {
         if (municion == 0) {
             System.out.println("Estas recargando calmate");
-
         } else {
             if (enemigoVivo(objetivoConVida)) {
                 municion -= 1;
                 objetivoConVida.setVida(objetivoConVida.getVida() - this.getDaño());
-
             }
         }
         return objetivoConVida;
     }
 
-
     public void recargar() {
         System.out.println("recarga de arma");
-        int tiempoRecarga = (int) (Math.round(daño * 0.2) * 10); //El tiempo de recarga depende del daño, puesto que asi se penaliza las armas con demasiado daño
+        int tiempoRecarga = (int) (Math.round(daño * 0.2) * 10);
         try {
             Thread.sleep(tiempoRecarga);
         } catch (InterruptedException ex) {
@@ -158,9 +154,5 @@ public class Arma implements Cloneable {
         }
         municion = capMunicion;
         System.out.println("Recarga completada. Munición: " + municion);
-
     }
-
-
-
 }

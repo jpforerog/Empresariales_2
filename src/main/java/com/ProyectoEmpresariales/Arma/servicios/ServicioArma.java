@@ -1,81 +1,96 @@
 package com.ProyectoEmpresariales.Arma.servicios;
 
-
 import com.ProyectoEmpresariales.Arma.model.Arma;
-import com.ProyectoEmpresariales.Arma.model.Municion;
+import com.ProyectoEmpresariales.Arma.model.Rifle;
+import com.ProyectoEmpresariales.Arma.repository.ArmaRepository;
+import com.ProyectoEmpresariales.Arma.repository.RifleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
+@Service
 public class ServicioArma {
 
-    private ArrayList<Arma> armas = new ArrayList<>();
-    private int contador = 0;
-    private static volatile ServicioArma instancia;
+    @Autowired
+    private ArmaRepository armaRepository;
 
-    private ServicioArma(){
+    @Autowired
+    private RifleRepository rifleRepository;
 
-    }
+    // Contador para mantener compatibilidad con índices legacy
+    private AtomicInteger indexCounter = new AtomicInteger(0);
 
-    public void añadirArma(Arma arm) throws Exception {
-        if (arm != null ) {
-            for (Arma arma : armas){
-                if (arm.getNombre().equals(arma.getNombre()) && arm.getClass().equals(arma.getClass())){
-                    throw new Exception("Arma con el mismo nombre y mismo tipo");
-                }
-            }
-            arm.setIndex(contador);
-            contador+=1;
-            armas.add(arm);
-
+    @Transactional
+    public Arma añadirArma(Arma arma) throws Exception {
+        // Verificar que no exista otra arma con el mismo nombre y tipo
+        if (armaRepository.existsByNombre(arma.getNombre())) {
+            throw new Exception("Arma con el mismo nombre y mismo tipo");
         }
-    }
-    public static ServicioArma getInstancia() {
-        if (instancia == null) {
-            synchronized (ServicioMunicion.class) {
-                if (instancia == null) {
-                    instancia = new ServicioArma();
-                }
-            }
-        }
-        return instancia;
+
+        // Asignar índice legacy
+        arma.setIndex(indexCounter.getAndIncrement());
+
+        // Guardar en la base de datos
+        return armaRepository.save(arma);
     }
 
-    public void listarArma() {
-        for (Arma arm : armas) {
-            System.out.println(arm.toString());
-        }
-    }
-
-
+    @Transactional(readOnly = true)
     public List<Arma> getArmas() {
-        return armas;
+        return armaRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public List<Rifle> getRifles() {
+        return rifleRepository.findAll();
+    }
+
+    @Transactional
     public void eliminarArma(Arma arma) {
-
-        if (arma != null) {
-            armas.remove(arma);
-        }
-
+        armaRepository.delete(arma);
     }
 
-    public void actualizarArma(Arma armaAct, Arma nueva) {
-
-        for (Arma ar : armas) {
-
-            if (armaAct.equals(ar)) {
-
-                int temp = ar.getIndex();
-                armas.remove(ar);
-                nueva.setIndex(temp);
-                armas.add(nueva);
-                return;
-            }
+    @Transactional
+    public Arma actualizarArma(Arma oldArma, Arma newArma) throws Exception {
+        // Verificar que el nuevo nombre no esté en uso por otra arma
+        if (!oldArma.getNombre().equals(newArma.getNombre()) &&
+                armaRepository.existsByNombre(newArma.getNombre())) {
+            throw new Exception("Otra arma con el mismo nombre ya fue creada");
         }
 
+        // Mantener el ID y el índice del arma original
+        newArma.setId(oldArma.getId());
+        newArma.setIndex(oldArma.getIndex());
 
+        return armaRepository.save(newArma);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Arma> findByNombre(String nombre) {
+        return armaRepository.findByNombre(nombre);
+    }
 
+    @Transactional(readOnly = true)
+    public List<Arma> findByVidaMinima(int vidaMinima) {
+        return armaRepository.findByVidaGreaterThanEqual(vidaMinima);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Arma> findByDañoMinimo(int dañoMinimo) {
+        return armaRepository.findByDañoGreaterThanEqual(dañoMinimo);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Arma> findByTipo(String tipo) {
+        if ("rifle".equalsIgnoreCase(tipo)) {
+            return rifleRepository.findAll().stream()
+                    .map(rifle -> (Arma) rifle)
+                    .collect(Collectors.toList());
+        }
+        return List.of();
+    }
 }
