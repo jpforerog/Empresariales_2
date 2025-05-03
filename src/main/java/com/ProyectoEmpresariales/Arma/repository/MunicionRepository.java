@@ -18,11 +18,4 @@ public interface MunicionRepository extends JpaRepository<Municion, Long> {
 
     boolean existsByNombre(String nombre);
 
-    // Este método es para mantener la compatibilidad con el código existente
-    default Municion findByLegacyIndex(int index) {
-        return findAll().stream()
-                .filter(m -> m.getIndex() == index)
-                .findFirst()
-                .orElse(null);
-    }
 }

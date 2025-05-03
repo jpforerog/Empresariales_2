@@ -15,9 +15,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+        import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -47,8 +49,41 @@ public class ArmaController {
             return new ResponseEntity<>("No hay armas", HttpStatus.NOT_FOUND);
         }
 
-        ArrayNode arrayNode = objectMapper.valueToTree(armas);
-        return new ResponseEntity<>(arrayNode, HttpStatus.OK);
+        // Crear una lista de DTOs para incluir información de munición
+        List<Map<String, Object>> armasConDetalles = new ArrayList<>();
+
+        for (Arma arma : armas) {
+            Map<String, Object> armaDTO = new HashMap<>();
+            armaDTO.put("id", arma.getId());
+            armaDTO.put("nombre", arma.getNombre());
+            armaDTO.put("daño", arma.getDaño());
+            armaDTO.put("municion", arma.getMunicion());
+            armaDTO.put("vida", arma.getVida());
+            armaDTO.put("distancia", arma.getDistancia());
+            armaDTO.put("fechaCreacion", arma.getFechaCreacion());
+            armaDTO.put("capMunicion", arma.getCapMunicion());
+            armaDTO.put("tipoArma", arma.getTipoArma());
+
+            // Incluir información adicional si es un rifle
+            if (arma instanceof Rifle) {
+                Rifle rifle = (Rifle) arma;
+                armaDTO.put("velocidad", rifle.getVelocidad());
+
+                // Añadir información básica de la munición
+                Municion municion = rifle.getTipoMunicion();
+                Map<String, Object> municionInfo = new HashMap<>();
+                municionInfo.put("id", municion.getId());
+                municionInfo.put("nombre", municion.getNombre());
+                municionInfo.put("cadencia", municion.getCadencia());
+                municionInfo.put("dañoArea", municion.isDañoArea());
+
+                armaDTO.put("tipoMunicion", municionInfo);
+            }
+
+            armasConDetalles.add(armaDTO);
+        }
+
+        return new ResponseEntity<>(armasConDetalles, HttpStatus.OK);
     }
 
     @GetMapping("/tipo")
@@ -94,30 +129,26 @@ public class ArmaController {
 
     @GetMapping("/buscar")
     public ResponseEntity<?> getArmaIndice(@RequestBody JsonNode jsonNode) {
-        if (!jsonNode.has("indice")) {
-            return new ResponseEntity<>("El json debe tener un atributo indice", HttpStatus.BAD_REQUEST);
+        if (!jsonNode.has("id")) {
+            return new ResponseEntity<>("El json debe tener un atributo id", HttpStatus.BAD_REQUEST);
         }
 
-        if (!jsonNode.get("indice").isInt()) {
-            return new ResponseEntity<>("El valor del indice debe ser numerico", HttpStatus.BAD_REQUEST);
+        if (!jsonNode.get("id").isNumber()) {
+            return new ResponseEntity<>("El valor del id debe ser numérico", HttpStatus.BAD_REQUEST);
         }
 
-        int indice = jsonNode.get("indice").asInt();
+        Long id = jsonNode.get("id").asLong();
 
-        if (!jsonNode.has("tipo")) {
-            return new ResponseEntity<>("El json tiene que tener un atributo tipo", HttpStatus.BAD_REQUEST);
-        }
+        // Comprobar si existe un arma con ese ID
+        Optional<Arma> armaOpt = servicioArma.findById(id);
 
-        String tipo = jsonNode.get("tipo").asText();
-        if (!tipo.equalsIgnoreCase("rifle")) {
-            return new ResponseEntity<>("El tipo de arma debe ser rifle o lanzador", HttpStatus.BAD_REQUEST);
-        }
-
-        // Buscar entre los rifles
-        List<Rifle> rifles = servicioArma.getRifles();
-        for (Rifle rifle : rifles) {
-            if (rifle.getIndex() == indice) {
-                return new ResponseEntity<>(rifle, HttpStatus.OK);
+        if (armaOpt.isPresent()) {
+            Arma arma = armaOpt.get();
+            // Verificar si es un rifle
+            if (arma instanceof Rifle) {
+                return new ResponseEntity<>(arma, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("El arma encontrada no es un rifle", HttpStatus.BAD_REQUEST);
             }
         }
 
@@ -270,69 +301,79 @@ public class ArmaController {
 
     @DeleteMapping(value = "/")
     public ResponseEntity<?> eliminarArma(@RequestBody JsonNode jsonNode) {
-        if (!jsonNode.has("indice")) {
-            return new ResponseEntity<>("Tienes que poner el campo indice con el que esta identificado el arma",
-                    HttpStatus.BAD_REQUEST);
+        if (!jsonNode.has("id")) {
+            return new ResponseEntity<>("Tienes que proporcionar el ID del arma", HttpStatus.BAD_REQUEST);
         }
 
-        if (!jsonNode.get("indice").isInt()) {
-            return new ResponseEntity<>("El indice tiene que ser un numero entero", HttpStatus.BAD_REQUEST);
+        if (!jsonNode.get("id").isNumber()) {
+            return new ResponseEntity<>("El ID debe ser un número", HttpStatus.BAD_REQUEST);
         }
 
-        int index = jsonNode.get("indice").asInt();
+        Long id = jsonNode.get("id").asLong();
 
-        if (!jsonNode.has("tipo")) {
-            return new ResponseEntity<>("Falta especificar el tipo de arma", HttpStatus.BAD_REQUEST);
+        // Buscar el arma por ID
+        Optional<Arma> armaOpt = servicioArma.findById(id);
+
+        if (!armaOpt.isPresent()) {
+            return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
         }
 
-        String tipo = jsonNode.get("tipo").asText();
-        if (!tipo.equalsIgnoreCase("Rifle")) {
-            return new ResponseEntity<>("El tipo de arma debe ser rifle o lanzador", HttpStatus.BAD_REQUEST);
+        // Verificar si es un rifle
+        Arma arma = armaOpt.get();
+        if (!(arma instanceof Rifle)) {
+            return new ResponseEntity<>("El arma encontrada no es del tipo esperado", HttpStatus.BAD_REQUEST);
         }
 
-        // Buscamos el arma por índice y tipo
-        List<Rifle> rifles = servicioArma.getRifles();
-        for (Rifle rifle : rifles) {
-            if (rifle.getIndex() == index) {
-                servicioArma.eliminarArma(rifle);
-                return new ResponseEntity<>(rifle, HttpStatus.OK);
-            }
-        }
+        Rifle rifle = (Rifle) arma;
 
-        return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
+        // Crear un DTO simplificado para la respuesta
+        Map<String, Object> armaDTO = new HashMap<>();
+        armaDTO.put("id", rifle.getId());
+        armaDTO.put("nombre", rifle.getNombre());
+        armaDTO.put("daño", rifle.getDaño());
+        armaDTO.put("municion", rifle.getMunicion());
+        armaDTO.put("vida", rifle.getVida());
+        armaDTO.put("velocidad", rifle.getVelocidad());
+
+        // No incluimos la relación tipoMunicion para evitar problemas de lazy loading
+        Map<String, Object> municionInfo = new HashMap<>();
+        municionInfo.put("id", rifle.getTipoMunicion().getId());
+        municionInfo.put("nombre", rifle.getTipoMunicion().getNombre());
+        armaDTO.put("tipoMunicion", municionInfo);
+
+        // Eliminar el arma
+        servicioArma.eliminarArma(arma);
+
+        // Devolver el DTO en lugar de la entidad
+        return new ResponseEntity<>(armaDTO, HttpStatus.OK);
     }
 
     @PutMapping(value = "/")
     public ResponseEntity<?> actualizarArma(@RequestBody JsonNode jsonNode) {
-        if (!jsonNode.has("indice")) {
-            return new ResponseEntity<>("Ingresa el campo de indice", HttpStatus.BAD_REQUEST);
+        if (!jsonNode.has("id")) {
+            return new ResponseEntity<>("Ingresa el ID del arma", HttpStatus.BAD_REQUEST);
         }
 
         if (!jsonNode.has("nombre") || jsonNode.get("nombre").asText().isEmpty()) {
             return new ResponseEntity<>("Nombre de arma no válido", HttpStatus.BAD_REQUEST);
         }
 
-        if (!jsonNode.has("tipo")) {
-            return new ResponseEntity<>("Falta especificar el tipo de arma", HttpStatus.BAD_REQUEST);
+        Long id = jsonNode.get("id").asLong();
+
+        // Buscar el arma a actualizar por ID
+        Optional<Arma> armaOpt = servicioArma.findById(id);
+
+        if (!armaOpt.isPresent()) {
+            return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
         }
 
-        int index = jsonNode.get("indice").asInt();
-        String tipo = jsonNode.get("tipo").asText();
-
-        if (!tipo.equalsIgnoreCase("Rifle")) {
-            return new ResponseEntity<>("El tipo de arma debe ser rifle", HttpStatus.BAD_REQUEST);
+        // Verificar si es un rifle
+        Arma arma = armaOpt.get();
+        if (!(arma instanceof Rifle)) {
+            return new ResponseEntity<>("El arma encontrada no es un rifle", HttpStatus.BAD_REQUEST);
         }
 
-        // Buscar el arma a actualizar
-        List<Rifle> rifles = servicioArma.getRifles();
-        Rifle rifleExistente = null;
-
-        for (Rifle rifle : rifles) {
-            if (rifle.getIndex() == index) {
-                rifleExistente = rifle;
-                break;
-            }
-        }
+        Rifle rifleExistente = (Rifle) arma;
 
         if (rifleExistente == null) {
             return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);

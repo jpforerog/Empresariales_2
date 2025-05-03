@@ -2,10 +2,12 @@ package com.ProyectoEmpresariales.Arma.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.lang.reflect.Field;
 
 @Entity
 @Table(name = "ARMAS")
 @Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "TIPO_ARMA", discriminatorType = DiscriminatorType.STRING)
 public abstract class Arma {
 
     @Id
@@ -33,10 +35,6 @@ public abstract class Arma {
 
     @Column(nullable = false)
     private final int distancia = 100;
-
-    // Campo legacy para compatibilidad con código existente
-    @Transient
-    private int index;
 
     @Column(name = "TIPO_ARMA", insertable = false, updatable = false)
     private String tipoArma;
@@ -69,14 +67,6 @@ public abstract class Arma {
 
     public int getDistancia() {
         return distancia;
-    }
-
-    public int getIndex() {
-        return index;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
     }
 
     public void setVida(int vida) {
@@ -124,7 +114,18 @@ public abstract class Arma {
     }
 
     public String getTipoArma() {
-        return tipoArma;
+        // Si el tipoArma está establecido, devolverlo
+        if (tipoArma != null) {
+            return tipoArma;
+        }
+
+        // De lo contrario, determinar el tipo basado en la clase real
+        String className = this.getClass().getSimpleName();
+        if ("Rifle".equals(className)) {
+            return "Rifle";
+        } else {
+            return null;
+        }
     }
 
     public boolean enemigoVivo(Arma enemigo) {

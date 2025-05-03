@@ -15,15 +15,13 @@ import java.util.stream.Collectors;
 
 @Service
 public class ServicioArma {
-
     @Autowired
     private ArmaRepository armaRepository;
 
     @Autowired
     private RifleRepository rifleRepository;
 
-    // Contador para mantener compatibilidad con índices legacy
-    private AtomicInteger indexCounter = new AtomicInteger(0);
+
 
     @Transactional
     public Arma añadirArma(Arma arma) throws Exception {
@@ -31,9 +29,6 @@ public class ServicioArma {
         if (armaRepository.existsByNombre(arma.getNombre())) {
             throw new Exception("Arma con el mismo nombre y mismo tipo");
         }
-
-        // Asignar índice legacy
-        arma.setIndex(indexCounter.getAndIncrement());
 
         // Guardar en la base de datos
         return armaRepository.save(arma);
@@ -62,11 +57,15 @@ public class ServicioArma {
             throw new Exception("Otra arma con el mismo nombre ya fue creada");
         }
 
-        // Mantener el ID y el índice del arma original
+        // Mantener el ID del arma original
         newArma.setId(oldArma.getId());
-        newArma.setIndex(oldArma.getIndex());
 
         return armaRepository.save(newArma);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Arma> findById(Long id) {
+        return armaRepository.findById(id);
     }
 
     @Transactional(readOnly = true)

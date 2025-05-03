@@ -1,5 +1,6 @@
 package com.ProyectoEmpresariales.Arma.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -8,10 +9,12 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "RIFLES")
+@DiscriminatorValue("Rifle")
 public class Rifle extends Arma {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "MUNICION_ID", nullable = false)
+    @JsonBackReference
     private Municion tipoMunicion;
 
     @Column(nullable = false)

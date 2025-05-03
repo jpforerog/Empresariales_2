@@ -12,7 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -65,15 +67,15 @@ public class MunicionController {
 
     @GetMapping(value = "/buscar/")
     public ResponseEntity<?> getPorID(@RequestBody JsonNode jsonNode) {
-        if (!jsonNode.has("indice") || !jsonNode.get("indice").isInt()) {
-            return new ResponseEntity<>("Se requiere un índice válido", HttpStatus.BAD_REQUEST);
+        if (!jsonNode.has("id") || !jsonNode.get("id").isNumber()) {
+            return new ResponseEntity<>("Se requiere un ID válido", HttpStatus.BAD_REQUEST);
         }
 
-        int index = jsonNode.get("indice").asInt();
-        Municion municion = servicioMunicion.findByIndex(index);
+        Long id = jsonNode.get("id").asLong();
+        Optional<Municion> municion = servicioMunicion.findById(id);
 
-        if (municion != null) {
-            return new ResponseEntity<>(municion, HttpStatus.OK);
+        if (municion.isPresent()) {
+            return new ResponseEntity<>(municion.get(), HttpStatus.OK);
         }
 
         return new ResponseEntity<>("Municion no encontrada", HttpStatus.NOT_FOUND);
@@ -158,47 +160,63 @@ public class MunicionController {
 
     @DeleteMapping(value = "/")
     public ResponseEntity<?> eliminarMunicion(@RequestBody JsonNode jsonNode) {
-        if (!jsonNode.has("indice")) {
-            return new ResponseEntity<>("Tienes que poner el campo indice", HttpStatus.BAD_REQUEST);
+        if (!jsonNode.has("id")) {
+            return new ResponseEntity<>("Tienes que proporcionar el ID de la munición", HttpStatus.BAD_REQUEST);
         }
 
-        if (!jsonNode.get("indice").isInt()) {
-            return new ResponseEntity<>("El indice tiene que ser un numero entero", HttpStatus.BAD_REQUEST);
+        if (!jsonNode.get("id").isNumber()) {
+            return new ResponseEntity<>("El ID debe ser un número", HttpStatus.BAD_REQUEST);
         }
 
-        int index = jsonNode.get("indice").asInt();
+        Long id = jsonNode.get("id").asLong();
 
-        // No permitir eliminar la munición predeterminada
-        if (index == 0) {
-            return new ResponseEntity<>("La municion predeterminada no se puede eliminar", HttpStatus.BAD_REQUEST);
-        }
-
-        Municion municion = servicioMunicion.findByIndex(index);
-        if (municion == null) {
+        // Buscar la munición
+        Optional<Municion> municionOpt = servicioMunicion.findById(id);
+        if (!municionOpt.isPresent()) {
             return new ResponseEntity<>("Munición no encontrada", HttpStatus.NOT_FOUND);
         }
 
+        Municion municion = municionOpt.get();
+
+        // Verificar si es la munición predeterminada
+        Municion predeterminada = servicioMunicion.getPredeterminada();
+        if (municion.getId().equals(predeterminada.getId())) {
+            return new ResponseEntity<>("La munición predeterminada no se puede eliminar", HttpStatus.BAD_REQUEST);
+        }
+
+        // Crear un DTO simplificado para la respuesta
+        Map<String, Object> municionDTO = new HashMap<>();
+        municionDTO.put("id", municion.getId());
+        municionDTO.put("nombre", municion.getNombre());
+        municionDTO.put("cadencia", municion.getCadencia());
+        municionDTO.put("dañoArea", municion.isDañoArea());
+
+        // Eliminar la munición
         servicioMunicion.eliminarMunicion(municion);
-        return new ResponseEntity<>(municion, HttpStatus.OK);
+
+        // Devolver el DTO en lugar de la entidad
+        return new ResponseEntity<>(municionDTO, HttpStatus.OK);
     }
 
     @PutMapping(value = "/")
     public ResponseEntity<?> actualizarMunicion(@RequestBody JsonNode jsonNode) {
         try {
-            if (!jsonNode.has("indice")) {
-                return new ResponseEntity<>("Ingresa el campo de indice", HttpStatus.BAD_REQUEST);
+            if (!jsonNode.has("id")) {
+                return new ResponseEntity<>("Ingresa el ID de la munición", HttpStatus.BAD_REQUEST);
             }
 
             if (!jsonNode.has("nombre") || jsonNode.get("nombre").asText().isEmpty()) {
                 return new ResponseEntity<>("Nombre de munición no válido", HttpStatus.BAD_REQUEST);
             }
 
-            int index = jsonNode.get("indice").asInt();
-            Municion municionExistente = servicioMunicion.findByIndex(index);
+            Long id = jsonNode.get("id").asLong();
+            Optional<Municion> municionExistenteOpt = servicioMunicion.findById(id);
 
-            if (municionExistente == null) {
+            if (!municionExistenteOpt.isPresent()) {
                 return new ResponseEntity<>("Munición no encontrada", HttpStatus.NOT_FOUND);
             }
+
+            Municion municionExistente = municionExistenteOpt.get();
 
             // Crear la nueva versión de la munición
             Municion nuevaMunicion = objectMapper.treeToValue(jsonNode, Municion.class);

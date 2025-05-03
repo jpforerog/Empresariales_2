@@ -22,9 +22,6 @@ public class ServicioMunicion {
     @Autowired
     private RifleRepository rifleRepository;
 
-    // Contador para mantener compatibilidad con índices legacy
-    private AtomicInteger indexCounter = new AtomicInteger(0);
-
     @PostConstruct
     public void init() {
         // Crear munición predeterminada si no existe
@@ -34,7 +31,6 @@ public class ServicioMunicion {
                     .dañoArea(false)
                     .cadencia(10)
                     .build();
-            predeterminada.setIndex(0);
             municionRepository.save(predeterminada);
         }
     }
@@ -45,9 +41,6 @@ public class ServicioMunicion {
         if (municionRepository.existsByNombre(municion.getNombre())) {
             throw new Exception("Municion con el mismo nombre");
         }
-
-        // Asignar índice legacy
-        municion.setIndex(indexCounter.getAndIncrement());
 
         // Guardar en la base de datos
         return municionRepository.save(municion);
@@ -60,13 +53,13 @@ public class ServicioMunicion {
 
     @Transactional
     public void eliminarMunicion(Municion municion) {
-        // No permitir eliminar la munición predeterminada (índice 0)
-        if (municion.getIndex() == 0) {
+        // No permitir eliminar la munición predeterminada
+        Municion predeterminada = getPredeterminada();
+        if (municion.getId().equals(predeterminada.getId())) {
             return;
         }
 
         // Actualizar rifles que usan esta munición a la predeterminada
-        Municion predeterminada = getPredeterminada();
         List<Rifle> riflesAfectados = rifleRepository.findByTipoMunicion(municion);
 
         for (Rifle rifle : riflesAfectados) {
@@ -86,9 +79,8 @@ public class ServicioMunicion {
             throw new Exception("Otra municion con el mismo nombre ya fue creada");
         }
 
-        // Mantener el ID y el índice de la munición original
+        // Mantener el ID de la munición original
         newMunicion.setId(oldMunicion.getId());
-        newMunicion.setIndex(oldMunicion.getIndex());
 
         return municionRepository.save(newMunicion);
     }
@@ -105,8 +97,8 @@ public class ServicioMunicion {
     }
 
     @Transactional(readOnly = true)
-    public Municion findByIndex(int index) {
-        return municionRepository.findByLegacyIndex(index);
+    public Optional<Municion> findById(Long id) {
+        return municionRepository.findById(id);
     }
 
     @Transactional(readOnly = true)

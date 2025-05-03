@@ -1,5 +1,6 @@
 package com.ProyectoEmpresariales.Arma.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
@@ -28,11 +29,8 @@ public class Municion {
     @Column(nullable = false)
     private int cadencia;
 
-    // Campo legacy para compatibilidad con código existente
-    @Transient
-    private int index;
-
     @OneToMany(mappedBy = "tipoMunicion")
+    @JsonManagedReference
     private List<Rifle> rifles;
 
     public Municion(@JsonProperty("nombre") String nombre,
