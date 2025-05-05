@@ -164,11 +164,35 @@ public class ArmaController {
         String nombre = jsonNode.get("nombre").asText();
         Optional<Arma> armaOpt = servicioArma.findByNombre(nombre);
 
-        if (armaOpt.isPresent()) {
-            return new ResponseEntity<>(armaOpt.get(), HttpStatus.OK);
+        // Verificar si el arma existe
+        if (armaOpt.isEmpty()) {
+            return new ResponseEntity<>("No se encontró ningún arma con el nombre: " + nombre, HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
+        Rifle rifle = (Rifle) armaOpt.get();
+
+        Map<String, Object> armaDTO = new HashMap<>();
+        armaDTO.put("id", rifle.getId());
+        armaDTO.put("nombre", rifle.getNombre());
+        armaDTO.put("daño", rifle.getDaño());
+        armaDTO.put("municion", rifle.getMunicion());
+        armaDTO.put("vida", rifle.getVida());
+        armaDTO.put("distancia", rifle.getDistancia());
+        armaDTO.put("fechaCreacion", rifle.getFechaCreacion());
+        armaDTO.put("capMunicion", rifle.getCapMunicion());
+        armaDTO.put("tipoArma", rifle.getTipoArma());
+        armaDTO.put("velocidad", rifle.getVelocidad());
+
+        // Añadir información básica de la munición
+        Municion municion = rifle.getTipoMunicion();
+        Map<String, Object> municionInfo = new HashMap<>();
+        municionInfo.put("id", municion.getId());
+        municionInfo.put("nombre", municion.getNombre());
+        municionInfo.put("cadencia", municion.getCadencia());
+        municionInfo.put("dañoArea", municion.isDañoArea());
+        armaDTO.put("tipoMunicion", municionInfo);
+
+        return new ResponseEntity<>(armaDTO, HttpStatus.OK);
     }
 
     @PostMapping("/buscar")
@@ -217,16 +241,48 @@ public class ArmaController {
             return new ResponseEntity<>("No existen armas con esas características", HttpStatus.NOT_FOUND);
         }
 
-        // Convertir a JSON
-        try {
-            String jsonResponse = objectMapper.writeValueAsString(armasFiltradas);
-            return ResponseEntity.ok()
-                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                    .body(jsonResponse);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error al convertir los resultados a JSON: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+        // Crear lista de DTOs con información detallada incluyendo la munición
+        List<Map<String, Object>> armasDTO = new ArrayList<>();
+
+        for (Arma arma : armasFiltradas) {
+            Map<String, Object> armaDTO = new HashMap<>();
+
+            // Información básica del arma
+            armaDTO.put("id", arma.getId());
+            armaDTO.put("nombre", arma.getNombre());
+            armaDTO.put("daño", arma.getDaño());
+            armaDTO.put("municion", arma.getMunicion());
+            armaDTO.put("vida", arma.getVida());
+            armaDTO.put("distancia", arma.getDistancia());
+            armaDTO.put("fechaCreacion", arma.getFechaCreacion());
+
+            // Si es un rifle, incluir campos específicos de rifle
+            if (arma instanceof Rifle) {
+                Rifle rifle = (Rifle) arma;
+                armaDTO.put("capMunicion", rifle.getCapMunicion());
+                armaDTO.put("tipoArma", rifle.getTipoArma());
+                armaDTO.put("velocidad", rifle.getVelocidad());
+
+                // Añadir información completa de la munición
+                Municion municion = rifle.getTipoMunicion();
+                if (municion != null) {
+                    Map<String, Object> municionInfo = new HashMap<>();
+                    municionInfo.put("id", municion.getId());
+                    municionInfo.put("nombre", municion.getNombre());
+                    municionInfo.put("cadencia", municion.getCadencia());
+                    municionInfo.put("dañoArea", municion.isDañoArea());
+                    // Agregar más propiedades de munición si existen
+
+                    armaDTO.put("tipoMunicion", municionInfo);
+                }
+            }
+
+            // Agregar cada DTO a la lista
+            armasDTO.add(armaDTO);
         }
+
+        // Retornar directamente el objeto, permitiendo que Spring lo convierta a JSON
+        return new ResponseEntity<>(armasDTO, HttpStatus.OK);
     }
 
     private String verificarCamposYTipos(JsonNode jsonNode) {
@@ -375,10 +431,6 @@ public class ArmaController {
 
         Rifle rifleExistente = (Rifle) arma;
 
-        if (rifleExistente == null) {
-            return new ResponseEntity<>("Arma no encontrada", HttpStatus.NOT_FOUND);
-        }
-
         try {
             // Creamos una copia del JSON para modificarla
             ObjectNode objectNode = (ObjectNode) jsonNode;
@@ -416,7 +468,36 @@ public class ArmaController {
             // Actualizamos en la base de datos
             Arma rifleActualizado = servicioArma.actualizarArma(rifleExistente, nuevoRifle);
 
-            return new ResponseEntity<>(rifleActualizado, HttpStatus.OK);
+            // Crear un DTO para la respuesta con la información completa incluyendo la munición
+            Map<String, Object> rifleDTO = new HashMap<>();
+            Rifle rifleRespuesta = (Rifle) rifleActualizado;
+
+            // Información básica del rifle
+            rifleDTO.put("id", rifleRespuesta.getId());
+            rifleDTO.put("nombre", rifleRespuesta.getNombre());
+            rifleDTO.put("daño", rifleRespuesta.getDaño());
+            rifleDTO.put("municion", rifleRespuesta.getMunicion());
+            rifleDTO.put("vida", rifleRespuesta.getVida());
+            rifleDTO.put("distancia", rifleRespuesta.getDistancia());
+            rifleDTO.put("fechaCreacion", rifleRespuesta.getFechaCreacion());
+            rifleDTO.put("capMunicion", rifleRespuesta.getCapMunicion());
+            rifleDTO.put("tipoArma", rifleRespuesta.getTipoArma());
+            rifleDTO.put("velocidad", rifleRespuesta.getVelocidad());
+
+            // Añadir información completa de la munición
+            Municion municion = rifleRespuesta.getTipoMunicion();
+            if (municion != null) {
+                Map<String, Object> municionInfo = new HashMap<>();
+                municionInfo.put("id", municion.getId());
+                municionInfo.put("nombre", municion.getNombre());
+                municionInfo.put("cadencia", municion.getCadencia());
+                municionInfo.put("dañoArea", municion.isDañoArea());
+                // Agregar más propiedades de munición si existen
+
+                rifleDTO.put("tipoMunicion", municionInfo);
+            }
+
+            return new ResponseEntity<>(rifleDTO, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
