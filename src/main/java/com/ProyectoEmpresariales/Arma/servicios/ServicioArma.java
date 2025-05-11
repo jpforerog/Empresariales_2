@@ -85,11 +85,16 @@ public class ServicioArma {
 
     @Transactional(readOnly = true)
     public List<Arma> findByTipo(String tipo) {
-        if ("rifle".equalsIgnoreCase(tipo)) {
-            return rifleRepository.findAll().stream()
-                    .map(rifle -> (Arma) rifle)
-                    .collect(Collectors.toList());
+        if (tipo == null) {
+            return List.of();
         }
-        return List.of();
+
+        String tipoNormalizado = tipo.toLowerCase();
+        switch (tipoNormalizado) {
+            case "rifle":
+                return armaRepository.findByTipoArma("Rifle");
+            default:
+                return List.of();
+        }
     }
 }
