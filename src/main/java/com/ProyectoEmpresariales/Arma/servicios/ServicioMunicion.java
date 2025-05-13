@@ -1,117 +1,113 @@
 package com.ProyectoEmpresariales.Arma.servicios;
 
-
-import com.ProyectoEmpresariales.Arma.model.Arma;
 import com.ProyectoEmpresariales.Arma.model.Municion;
 import com.ProyectoEmpresariales.Arma.model.Rifle;
+import com.ProyectoEmpresariales.Arma.repository.MunicionRepository;
+import com.ProyectoEmpresariales.Arma.repository.RifleRepository;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
+@Service
 public class ServicioMunicion {
 
-    private static volatile ServicioMunicion instancia;
-    private ArrayList<Municion> municiones = new ArrayList<>();
-    private int contador = 0;
-    private ServicioArma servicioArma= ServicioArma.getInstancia();
+    @Autowired
+    private MunicionRepository municionRepository;
 
-    private ServicioMunicion(){
-        try {
-            añadirMunicion(Municion.builder()
+    @Autowired
+    private RifleRepository rifleRepository;
+
+    @PostConstruct
+    public void init() {
+        // Crear munición predeterminada si no existe
+        if (municionRepository.count() == 0) {
+            Municion predeterminada = Municion.builder()
                     .nombre("Predeterminado")
                     .dañoArea(false)
                     .cadencia(10)
-                    .build());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        };
-    }
-
-    public static ServicioMunicion getInstancia() {
-        if (instancia == null) {
-            synchronized (ServicioMunicion.class) {
-                if (instancia == null) {
-                    instancia = new ServicioMunicion();
-                }
-            }
-        }
-        return instancia;
-    }
-
-    public void añadirMunicion(Municion arm) throws Exception {
-        if (arm != null ) {
-            for (Municion arma : municiones){
-                if (arm.getNombre().equals(arma.getNombre())){
-                    throw new Exception("Municion con el mismo nombre");
-                }
-            }
-            arm.setIndex(contador);
-            contador+=1;
-            municiones.add(arm);
-
+                    .build();
+            municionRepository.save(predeterminada);
         }
     }
 
-    public void listarMuniciones() {
-        for (Municion arm : municiones) {
-            System.out.println(arm.toString());
+    @Transactional
+    public Municion añadirMunicion(Municion municion) throws Exception {
+        // Validar que no exista otra munición con el mismo nombre
+        if (municionRepository.existsByNombre(municion.getNombre())) {
+            throw new Exception("Municion con el mismo nombre");
         }
+
+        // Guardar en la base de datos
+        return municionRepository.save(municion);
     }
 
-
+    @Transactional(readOnly = true)
     public List<Municion> getMuniciones() {
-        return municiones;
+        return municionRepository.findAll();
     }
 
-    public void eliminarMunicion(Municion arma) {
-
-        if (arma != null) {
-            municiones.remove(arma);
-            cambiarPredeterminada(arma);
+    @Transactional
+    public void eliminarMunicion(Municion municion) {
+        // No permitir eliminar la munición predeterminada
+        Municion predeterminada = getPredeterminada();
+        if (municion.getId().equals(predeterminada.getId())) {
+            return;
         }
 
+        // Actualizar rifles que usan esta munición a la predeterminada
+        List<Rifle> riflesAfectados = rifleRepository.findByTipoMunicion(municion);
 
-    }
-    void cambiarPredeterminada(Municion arma){
-        for (Arma armaTemp : servicioArma.getArmas()){
-            if (arma.getIndex()==((Rifle) armaTemp).getTipoMunicion().getIndex()){
-                ((Rifle) armaTemp).setTipoMunicion(getPredeterminada());
-            }
-        }
-    }
-
-    public void actualizarMunicion(Municion armaAct, Municion nueva) {
-
-        for (Municion ar : municiones) {
-
-            if (armaAct.equals(ar)) {
-
-                int temp = ar.getIndex();
-                municiones.remove(ar);
-                nueva.setIndex(temp);
-                municiones.add(nueva);
-                actualizarMunicionArma(nueva);
-                return;
-            }
+        for (Rifle rifle : riflesAfectados) {
+            rifle.setTipoMunicion(predeterminada);
+            rifleRepository.save(rifle);
         }
 
-
+        // Eliminar la munición
+        municionRepository.delete(municion);
     }
 
-    void actualizarMunicionArma(Municion municion){
-        for(Arma arma: servicioArma.getArmas()){
-            if(municion.getIndex() == ((Rifle)arma).getTipoMunicion().getIndex()){
-                ((Rifle) arma).setTipoMunicion(municion);
-            }
+    @Transactional
+    public Municion actualizarMunicion(Municion oldMunicion, Municion newMunicion) throws Exception {
+        // Verificar que el nuevo nombre no esté en uso por otra munición
+        if (!oldMunicion.getNombre().equals(newMunicion.getNombre()) &&
+                municionRepository.existsByNombre(newMunicion.getNombre())) {
+            throw new Exception("Otra municion con el mismo nombre ya fue creada");
         }
-    }
-    public Municion getPredeterminada(){
-        for (Municion mun : municiones){
-            if(mun.getIndex()==0){
-                return mun;
-            }
-        }return null;
+
+        // Mantener el ID de la munición original
+        newMunicion.setId(oldMunicion.getId());
+
+        return municionRepository.save(newMunicion);
     }
 
+    @Transactional(readOnly = true)
+    public Municion getPredeterminada() {
+        return municionRepository.findByNombre("Predeterminado")
+                .orElseThrow(() -> new RuntimeException("Munición predeterminada no encontrada"));
+    }
 
+    @Transactional(readOnly = true)
+    public Optional<Municion> findByNombre(String nombre) {
+        return municionRepository.findByNombre(nombre);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Municion> findById(Long id) {
+        return municionRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Municion> findByCadenciaMinima(int cadenciaMinima) {
+        return municionRepository.findByCadenciaGreaterThanEqual(cadenciaMinima);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Municion> findByDañoArea(boolean dañoArea) {
+        return municionRepository.findByDañoArea(dañoArea);
+    }
 }
